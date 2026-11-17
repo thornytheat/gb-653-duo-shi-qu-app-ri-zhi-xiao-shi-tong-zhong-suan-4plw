@@ -14,6 +14,7 @@
 | M4 小时分桶 | 运行样例并复核证据 | `/api/buckets/rebuild` / `/buckets` | `app/modules/m4_buckets/core.py` `app/modules/m4_buckets/service.py` | `tests/test_m4_buckets.py` |
 | M5 迟到修订 | 运行样例并复核证据 | `/api/watermark/advance` / `/watermark` | `app/modules/m5_watermark/core.py` `app/modules/m5_watermark/service.py` | `tests/test_m5_watermark.py` |
 | M6 批次对账 | 运行样例并复核证据 | `/api/export/buckets.csv` / `/runs` | `app/modules/m6_runs/core.py` `app/modules/m6_runs/service.py` | `tests/test_m6_runs.py` |
+| M7 离线分支合并 | 从实际日志派生分支、封账、三方合并与裁决 | `/api/merge` / `/merge` | `app/modules/m7_merge/core.py` `app/modules/m7_merge/service.py` `app/modules/m7_merge/store.py` | `tests/test_m7_merge.py` |
 
         ## 陷阱登记
 
@@ -29,12 +30,17 @@
 | TRAP-14 | 真实边界输入 | 朴素处理会错分 | 保留证据并稳定裁决 | `app/modules/m2_time/core.py` | `tests/test_m2_time.py::test_trap_2` |
 | TRAP-16 | 真实边界输入 | 朴素处理会错分 | 保留证据并稳定裁决 | `app/modules/m3_events/core.py` | `tests/test_m3_events.py::test_trap_2` |
 | TRAP-23 | 真实边界输入 | 朴素处理会错分 | 保留证据并稳定裁决 | `app/modules/m4_buckets/core.py` | `tests/test_m4_buckets.py::test_trap_2` |
+| TRAP-27 | 两地封账桶值各自正确，合并时覆盖会丢贡献、相加会重复计数 | 直接用桶值合并 | 从实际事件重算桶，回执仍按各自原结果回读 | `app/modules/m7_merge/core.py` | `tests/test_m7_merge.py::test_buckets_recomputed_not_summed` |
+| TRAP-28 | 共同祖先后两地改同一请求为不同值 | 后到覆盖或直接丢弃 | 保留两方候选、留因裁决，未裁决桶保留主库旧值 | `app/modules/m7_merge/service.py` | `tests/test_m7_merge.py::test_conflict_keeps_both_candidates_without_blocking_other_buckets` |
+| TRAP-29 | 中断后重试导致贡献重复 | 从头重放 | 计划落盘、逐条幂等、续跑只补未应用项 | `app/modules/m7_merge/store.py` | `tests/test_m7_merge.py::test_resume_is_idempotent_after_interruption` |
+| TRAP-30 | 基于旧版本并发合并 | 无版本校验直接写 | 版本 CAS 拒绝旧版，撤销只回冲本次动作 | `app/modules/m7_merge/store.py` | `tests/test_m7_merge.py::test_stale_version_rejected` |
 
         ## 对账规则
 
         - 输入记录数 = 有效记录数 + 隔离记录数 + 空记录数。
         - 核心数值或事件数在转换、判定和导出之间保持守恒。
         - 同一输入摘要重跑复用原运行编号，不增加结果行。
+- 合并输入事件数 = 各分支实际事件并集；合并后桶计数 = 合并后实际事件数，不做桶值相加。
 
         ## 已知不覆盖
 

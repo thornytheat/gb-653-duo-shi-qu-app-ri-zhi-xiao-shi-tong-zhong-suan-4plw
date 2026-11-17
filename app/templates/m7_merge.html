@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block content %}
+<div class="grid module-7"><section class="panel panel--primary"><div class="panel__head"><h2>离线分支合并记录</h2><span class="panel__meta">M7 · {{ data.status|default('READY') }}</span></div><div class="panel__body panel__body--scroll"><table class="ledger"><thead><tr><th>字段</th><th>值</th><th>证据</th></tr></thead><tbody>
+<tr><td>主库版本</td><td class="num" data-field="version">{{ data.version|default(0) }}</td><td>V</td></tr>
+<tr><td>主库事件</td><td class="num" data-field="main_events">{{ data.main.events|length }}</td><td>E</td></tr>
+<tr><td>待合并</td><td class="num" data-field="pending">{{ data.pending|length }}</td><td>P</td></tr>
+<tr><td>冲突</td><td class="num" data-field="conflicts">{{ data.conflicts|length }}</td><td>C</td></tr>
+<tr><td>完成</td><td class="num" data-field="completed">{{ data.completed|length }}</td><td>D</td></tr>
+</tbody></table></div></section>
+<div class="stack">
+<section class="panel"><div class="panel__head"><h2>分支</h2><span class="panel__meta">{{ data.branches|length }} 条</span></div><div class="panel__body panel__body--scroll"><table class="ledger"><thead><tr><th>分支</th><th>站点</th><th>状态</th><th>事件</th></tr></thead><tbody>
+{% for item in data.branches %}<tr><td>{{ item.branch_id }}</td><td>{{ item.site }}</td><td>{{ item.state }}</td><td class="num">{{ item.event_count }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="panel"><div class="panel__head"><h2>待裁决冲突</h2><span class="panel__meta">{{ data.conflicts|length }} 条</span></div><div class="panel__body panel__body--scroll"><table class="ledger"><thead><tr><th>冲突</th><th>请求</th><th>候选</th><th>桶</th></tr></thead><tbody>
+{% for item in data.conflicts %}<tr><td>{{ item.conflict_id }}</td><td>{{ item.request_id }}</td><td class="num">{{ item.candidates|length }}</td><td>{{ item.primary.hour }} / {{ item.primary.service }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+<section class="panel"><div class="panel__head"><h2>本次动作</h2><span class="panel__meta">/api/merge/demo</span></div><div class="panel__body"><button class="btn btn--primary" data-endpoint="/api/merge/demo">运行 离线分支合并</button><pre class="result">等待运行</pre></div></section></div></div>
+{% endblock %}
